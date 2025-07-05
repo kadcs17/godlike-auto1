@@ -1,3 +1,5 @@
+# 该脚本会等待广告结束弹出提示【Successfully added 90 minutes to server timer】，等不到会报错。但事实已经看了广告
+
 import os
 import time
 import signal
