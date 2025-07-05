@@ -5,37 +5,26 @@ from playwright.sync_api import sync_playwright, TimeoutError as PlaywrightTimeo
 from datetime import datetime
 
 # --- 配置项 ---
-# 目标服务器页面
+# (这部分无变化)
 SERVER_URL = "https://panel.godlike.host/server/61b8ad3c"
-# 登录页面
 LOGIN_URL = "https://panel.godlike.host/auth/login"
-# Cookie 名称
 COOKIE_NAME = "remember_web_59ba36addc2b2f9401580f014c7f58ea4e30989d"
-# 单次任务执行的超时时间（秒）
-# 如果点击、等待广告等一系列操作超过这个时间，将强制中断本次任务并重试
-TASK_TIMEOUT_SECONDS = 300  # 300秒 = 5分钟
+TASK_TIMEOUT_SECONDS = 300
 
 # --- 超时处理机制 ---
+# (这部分无变化)
 class TaskTimeoutError(Exception):
-    """自定义任务超时异常"""
     pass
 
 def timeout_handler(signum, frame):
-    """超时信号处理函数"""
     raise TaskTimeoutError("任务执行时间超过设定的阈值")
 
-# 注册信号处理器 (仅在非Windows环境生效，这对于在Linux上运行的GitHub Actions是完美的)
 if os.name != 'nt':
     signal.signal(signal.SIGALRM, timeout_handler)
-# --------------------
 
 
 def login_with_playwright(page):
-    """
-    处理登录逻辑，优先使用Cookie，失败则使用邮箱密码。
-    返回 True 表示登录成功，False 表示失败。
-    """
-    # ... (此函数内容与之前版本完全相同，为保持完整性而保留)
+    # (此函数内部无变化，但为方便调试，在出错打印时增加 flush=True)
     remember_web_cookie = os.environ.get('PTERODACTYL_COOKIE')
     pterodactyl_email = os.environ.get('PTERODACTYL_EMAIL')
     pterodactyl_password = os.environ.get('PTERODACTYL_PASSWORD')
@@ -59,7 +48,7 @@ def login_with_playwright(page):
             return True
 
     if not (pterodactyl_email and pterodactyl_password):
-        print("错误: Cookie 无效或未提供，且未提供 PTERODACTYL_EMAIL 和 PTERODACTYL_PASSWORD。无法登录。")
+        print("错误: Cookie 无效或未提供，且未提供 PTERODACTYL_EMAIL 和 PTERODACTYL_PASSWORD。无法登录。", flush=True)
         return False
 
     print("正在尝试使用邮箱和密码登录...")
@@ -83,22 +72,19 @@ def login_with_playwright(page):
             page.click(login_button_selector)
         
         if "auth/login" in page.url:
-            print("邮箱密码登录失败，请检查凭据是否正确。")
+            print("邮箱密码登录失败，请检查凭据是否正确。", flush=True)
             page.screenshot(path="login_fail_error.png")
             return False
         
         print("邮箱密码登录成功！")
         return True
     except Exception as e:
-        print(f"邮箱密码登录过程中发生错误: {e}")
+        print(f"邮箱密码登录过程中发生错误: {e}", flush=True)
         page.screenshot(path="login_process_error.png")
         return False
 
 def add_time_task(page):
-    """
-    执行一次增加90分钟时长的任务。
-    此函数现在仅包含核心操作，超时逻辑移至主循环。
-    """
+    # (此函数内部无变化，但为方便调试，在出错打印时增加 flush=True)
     try:
         print(f"[{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}] 开始执行增加时长任务...")
         
@@ -126,32 +112,34 @@ def add_time_task(page):
         return True
 
     except PlaywrightTimeoutError as e:
-        print(f"❌ 任务执行超时: 未在规定时间内找到元素。请检查选择器或页面是否已更改。")
+        print(f"❌ 任务执行超时: 未在规定时间内找到元素。请检查选择器或页面是否已更改。", flush=True)
         page.screenshot(path="task_element_timeout_error.png")
         return False
     except Exception as e:
-        print(f"❌ 任务执行过程中发生未知错误: {e}")
+        print(f"❌ 任务执行过程中发生未知错误: {e}", flush=True)
         page.screenshot(path="task_general_error.png")
         return False
 
 
 def main():
+    # 【【【 次要修改点 】】】
+    # 在关键启动和错误位置添加 flush=True
+    print("正在初始化 Playwright 并启动浏览器...", flush=True)
     with sync_playwright() as p:
         browser = p.chromium.launch(headless=True)
         page = browser.new_page()
         page.set_default_timeout(60000)
+        print("浏览器启动成功。", flush=True)
 
         try:
             if not login_with_playwright(page):
-                print("登录失败，程序终止。")
+                print("登录失败，程序终止。", flush=True)
                 browser.close()
                 return
 
-            # 进入主循环
             while True:
-                # --- 新增的超时监控逻辑 ---
                 if os.name != 'nt':
-                    signal.alarm(TASK_TIMEOUT_SECONDS) # 设置闹钟
+                    signal.alarm(TASK_TIMEOUT_SECONDS)
                 
                 try:
                     print("\n----------------------------------------------------")
@@ -162,31 +150,30 @@ def main():
                         print("本轮任务失败，将按计划等待后重试。")
                     
                     if os.name != 'nt':
-                        signal.alarm(0)  # 如果任务提前完成，取消闹钟
+                        signal.alarm(0)
 
                 except TaskTimeoutError as e:
-                    print(f"🔥🔥🔥 任务强制超时（{TASK_TIMEOUT_SECONDS}秒）！脚本可能卡住了。🔥🔥🔥")
-                    print(f"错误信息: {e}")
+                    print(f"🔥🔥🔥 任务强制超时（{TASK_TIMEOUT_SECONDS}秒）！脚本可能卡住了。🔥🔥🔥", flush=True)
+                    print(f"错误信息: {e}", flush=True)
                     page.screenshot(path="task_force_timeout_error.png")
-                    print("已截图，将按计划等待后重试。")
+                    print("已截图，将按计划等待后重试。", flush=True)
                 except Exception as e:
-                    print(f"主循环发生未知严重错误: {e}")
+                    print(f"主循环发生未知严重错误: {e}", flush=True)
                     page.screenshot(path="main_loop_critical_error.png")
-                # --- 超时逻辑结束 ---
                 
                 print(f"[{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}] 等待6分钟后开始下一轮任务...")
                 print("----------------------------------------------------")
                 time.sleep(360)
         
         except Exception as e:
-            print(f"主程序发生严重错误: {e}")
+            print(f"主程序发生严重错误: {e}", flush=True)
             page.screenshot(path="main_critical_error.png")
         finally:
-            print("关闭浏览器，程序结束。")
+            print("关闭浏览器，程序结束。", flush=True)
             browser.close()
 
 
 if __name__ == "__main__":
-    print("启动自动化任务（带任务超时监控）...")
+    print("启动自动化任务（带任务超时监控, v2-unbuffered）...", flush=True)
     main()
     exit(0)
