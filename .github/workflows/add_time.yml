@@ -41,7 +41,7 @@ jobs:
           # 方案二: 邮箱和密码 (备用)
           PTERODACTYL_EMAIL: ${{ secrets.PTERODACTYL_EMAIL }}
           PTERODACTYL_PASSWORD: ${{ secrets.PTERODACTYL_PASSWORD }}
-        run: python main.py
+        run: python -u main.py
 
       - name: Upload error artifacts
         if: failure() # 仅在上一步（运行脚本）失败时执行
