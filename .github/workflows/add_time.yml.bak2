@@ -1,3 +1,5 @@
+  # 该脚本，会等待广告结束后提示【Successfully added 90 minutes to server timer】，一直等不到会报错。
+
 name: Add Godlike Server Time
 
 on:
