@@ -59,7 +59,7 @@ def login_with_playwright(page):
         
         page.wait_for_load_state('networkidle')  # 页面静止时再继续
 
-        page.wait_for_selector("a:has-text("Through login/password")", timeout=30000)
+        page.wait_for_selector(`a:has-text("Through login/password")`, timeout=30000)
         page.click('a:has-text("Through login/password")')
 
 
