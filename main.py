@@ -57,8 +57,11 @@ def login_with_playwright(page):
     try:
         print("正在点击 'Through login/password'...")
         
-        frame = page.frame_locator('iframe[name="frame_name_or_selector"]')
-        frame.locator('a:has-text("Through login/password")').click()
+        page.wait_for_load_state('networkidle')  # 页面静止时再继续
+
+        page.wait_for_selector("selector_of_stable_element", timeout=15000)
+        page.click('a:has-text("Through login/password")')
+
 
 
         
