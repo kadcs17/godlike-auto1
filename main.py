@@ -57,7 +57,8 @@ def login_with_playwright(page):
     try:
         print("正在点击 'Through login/password'...")
         page.locator('a:has-text("Through login/password")').wait_for(state='visible', timeout=10000)
-        page.locator('a:has-text("Through login/password")').click()
+        page.click('a:has-text("Through login/password")', force=True)
+
         
         email_selector = 'input[name="username"]'
         password_selector = 'input[name="password"]'
