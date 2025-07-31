@@ -57,10 +57,7 @@ def login_with_playwright(page):
     try:
         print("正在点击 'Through login/password'...")
         
-        page.wait_for_load_state('networkidle')  # 页面静止时再继续
-
-        page.wait_for_selector(`input[name="email"]`, timeout=30000)
-        page.click('a:has-text("Through login/password")')
+        page.locator('a:has-text("Through login/password")').click()
 
 
 
