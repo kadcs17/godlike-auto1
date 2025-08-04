@@ -2,7 +2,8 @@ name: Add Godlike Server Time
 
 on:
   schedule:
-    - cron: "*/30 * * * *"  # 每30分钟触发一次
+    - cron: '0 */3 * * *'   # 每3小时运行一次
+    - cron: '30 1-23/3 * * *' # 从01:30开始，每3小时+90分钟运行一次（即90分钟间隔）
   workflow_dispatch:        # 允许手动触发
 
 jobs:
@@ -10,7 +11,7 @@ jobs:
     runs-on: ubuntu-latest
     
     # 由于脚本现在是单次运行，不再需要长时间的 timeout
-    # 设置一个合理的超时，例如10分钟，防止意外卡死
+    # 设置一个合理的超时，例如10分，防止意外卡死
     timeout-minutes: 10
 
     steps:
